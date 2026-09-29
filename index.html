@@ -184,7 +184,7 @@ table.kv td{overflow-wrap:anywhere}
         <button class="chip" id="btnLayers" type="button" aria-expanded="false" aria-controls="drawer">☰ Layers</button>
         <div class="drawer" id="drawer" hidden>
           <details class="grp" open><summary>Base</summary>
-            <div class="row"><button class="tog" data-layer="terrain" aria-pressed="true">Terrain</button><button class="tog" data-layer="context" aria-pressed="true" id="ctxTog" hidden>Neighbours</button><label class="sel" id="imgChip"><span class="vh">Imagery</span><select id="iMode" aria-label="Imagery"></select></label></div></details>
+            <div class="row"><button class="tog" data-layer="terrain" aria-pressed="true">Terrain</button><button class="tog" data-layer="context" aria-pressed="true" id="ctxTog" hidden>Church (context)</button><label class="sel" id="imgChip"><span class="vh">Imagery</span><select id="iMode" aria-label="Imagery"></select></label></div></details>
           <details class="grp" open><summary>Model</summary>
             <div class="row"><button class="tog" data-layer="walls" aria-pressed="true">Walls</button><button class="tog" data-layer="roofs" aria-pressed="true">Roofs</button><button class="tog" data-layer="windows" aria-pressed="true">Openings</button></div>
             <div class="row"><button class="tog" data-layer="floors" aria-pressed="false">Interior (floors, cross walls)</button><button class="tog" data-layer="pins" aria-pressed="true">Field pins</button></div>
@@ -268,10 +268,10 @@ const recsBy = new Map();           // element id -> [condition records]
 let selected = null, pinMode = false, cMode = "material";
 const SEVR = {critical:4, high:3, medium:2, low:1, unknown:0};
 const COLORS = {
-  material:{interior:0xb07860, foundation:0x8f8f89, porch:0xa9a9a3, context:0x8c8278, wall:0xa8543c, parapet:0x96503a, roof:0x4a5058, flatroof:0x606468, chimney:0x8c4634, floor:0xc8b48c, window:0xe2e8ec, door:0x6e563c, ground:0x786e5a},
+  material:{walk:0xd8d0bc, tree:0x4f8a4f, interior:0xb07860, foundation:0x8f8f89, porch:0xa9a9a3, context:0x8c8278, wall:0xa8543c, parapet:0x96503a, roof:0x4a5058, flatroof:0x606468, chimney:0x8c4634, floor:0xc8b48c, window:0xe2e8ec, door:0x6e563c, ground:0x786e5a},
   severity:{critical:0x8e1b1b, high:0xc2410c, medium:0xd4a800, low:0x5b8f5b, unknown:0x8a9097, none:0x3b4148},
   status:{conflicting:0xd13a30, reported:0x7d82c4, "observed-imagery":0x2fa3b8, "observed-lidar":0x4f8fe0, withheld:0x6a7076, verified:0x3a9a48, site:0xd08a00, none:0x3b4148},
-  source:{sanborn:0x7a5ab8, "lidar+assumed":0x8a78c0, lidar:0x3f86c9, "lidar+oblique":0x6aa8d8, oblique:0xe0a040, "oblique+assumed":0xd07a40, assumed:0xb0569c}
+  source:{photo:0x40c0a0, "imagery-trace":0xe0c040, sanborn:0x7a5ab8, "lidar+assumed":0x8a78c0, lidar:0x3f86c9, "lidar+oblique":0x6aa8d8, oblique:0xe0a040, "oblique+assumed":0xd07a40, assumed:0xb0569c}
 };
 const localToWorld = (x, y, h) => new THREE.Vector3(x, h, -y);
 
@@ -313,7 +313,7 @@ async function buildPoints(name, group, dim){
 }
 
 // ---------------------------------------------------------------- element model
-function layerOf(kind){ return kind === "context" ? "context" : kind === "interior" ? "floors" : kind === "roof" || kind === "flatroof" || kind === "chimney" ? "roofs" : kind === "window" || kind === "door" ? "windows" : kind === "floor" ? "floors" : "walls"; }
+function layerOf(kind){ return kind === "context" || kind === "tree" ? "context" : kind === "interior" ? "floors" : kind === "roof" || kind === "flatroof" || kind === "chimney" ? "roofs" : kind === "window" || kind === "door" ? "windows" : kind === "floor" ? "floors" : "walls"; }
 async function buildModel(){
   const buf = await getBuf("model.glb");
   const gltf = await new GLTFLoader().parseAsync(buf, "");
@@ -322,8 +322,8 @@ async function buildModel(){
   for (const o of list){
     const id = o.name || o.parent?.name, e = EL.get(id); if (!e) continue;
     o.geometry.deleteAttribute("color");
-    o.material = new THREE.MeshStandardMaterial({color:0xffffff, roughness:0.85, metalness:0, flatShading:true, transparent:e.kind === "floor" || e.kind === "ground" || e.kind === "interior",
-      opacity:e.kind === "floor" ? 0.55 : e.kind === "interior" ? 0.7 : e.kind === "ground" ? 0 : 1, side:THREE.DoubleSide, polygonOffset:e.kind === "window" || e.kind === "door", polygonOffsetFactor:-2});
+    o.material = new THREE.MeshStandardMaterial({color:0xffffff, roughness:0.85, metalness:0, flatShading:true, transparent:e.kind === "floor" || e.kind === "ground" || e.kind === "interior" || e.kind === "tree",
+      opacity:e.kind === "floor" ? 0.55 : e.kind === "interior" ? 0.7 : e.kind === "tree" ? 0.45 : e.kind === "ground" ? 0 : 1, depthWrite:e.kind !== "tree", side:THREE.DoubleSide, polygonOffset:e.kind === "window" || e.kind === "door", polygonOffsetFactor:-2});
     o.updateWorldMatrix(true, false);
     const g = o.geometry.clone().applyMatrix4(o.matrixWorld).toNonIndexed(); g.computeVertexNormals();
     const w = new THREE.Mesh(g, o.material); w.userData.id = id;
@@ -337,7 +337,7 @@ function statusOf(id){ const r = recsBy.get(id) || []; for (const s of ["conflic
 function colorModel(){
   for (const [id, m] of meshes){
     const e = EL.get(id); let c;
-    if (cMode === "material" || e.kind === "window" && cMode !== "source" && !(recsBy.get(id) || []).length) c = COLORS.material[e.kind];
+    if (cMode === "material" || e.kind === "tree" || e.kind === "context" || e.kind === "window" && cMode !== "source" && !(recsBy.get(id) || []).length) c = COLORS.material[e.kind];
     else if (cMode === "severity"){ const w = worstRec(id); c = COLORS.severity[w ? w.severity : "none"]; }
     else if (cMode === "status") c = COLORS.status[statusOf(id)];
     else c = COLORS.source[e.src] ?? 0x888888;
@@ -371,6 +371,12 @@ function toBuilding(v){   // world -> building frame (a, b, h)
 }
 function wallUV(e, v){
   if (!e.frame) return null;
+  if (e.frame.kind === "path" && S.trace){      // walkway: u = metres along the walk from its start, v = metres across (+ = right, walking clockwise)
+    const px = v.x, py = -v.z, T = S.trace; let bi = 0, bd = 1e9;
+    for (let i = 0; i < T.x.length; i++){ const d = (T.x[i] - px) ** 2 + (T.y[i] - py) ** 2; if (d < bd){ bd = d; bi = i; } }
+    const j = (bi + 1) % T.x.length, tx = T.x[j] - T.x[bi], ty = T.y[j] - T.y[bi], tl = Math.hypot(tx, ty) || 1;
+    return [+(bi * T.step).toFixed(2), +(((px - T.x[bi]) * ty - (py - T.y[bi]) * tx) / tl).toFixed(2)];
+  }
   const [a, b, h] = toBuilding(v), o = e.frame.origin, d = e.frame.dir;
   return [+(((a - o[0]) * d[0] + (b - o[1]) * d[1])).toFixed(2), +(h - (e.frame.base || 0)).toFixed(2)];
 }
@@ -453,7 +459,7 @@ function showRecord(r){
   for (const id of r.elements){ const m = meshes.get(id); if (m) m.material.emissive.setHex(0x554400); }
   panel.innerHTML = tabs() + `<button class="back" data-tab="conditions">‹ All conditions</button>${recHTML(r)}
     <div><h3>Elements</h3><ul class="plain">${r.elements.map(id => `<li><a href="#" data-el="${esc(id)}">${esc(id)}</a>: ${esc(EL.get(id)?.name || "")}</li>`).join("")}</ul></div>
-    ${r.precision === "point" ? `<table class="kv"><tr><td>Position on wall</td><td>${r.uv ? `u ${r.uv[0]} m along, v ${r.uv[1]} m above local ground` : "—"}</td></tr><tr><td>Observer</td><td>${esc(r.observer)}</td></tr><tr><td>Date</td><td>${esc(r.date)}</td></tr><tr><td>Photo ref</td><td>${esc(r.photo)}</td></tr></table>
+    ${r.precision === "point" ? `<table class="kv"><tr><td>Position</td><td>${r.uv ? (EL.get(r.elements[0])?.frame?.kind === "path" ? `${r.uv[0]} m along the walk, ${r.uv[1]} m across` : `u ${r.uv[0]} m along, v ${r.uv[1]} m above local ground`) : "—"}</td></tr><tr><td>Observer</td><td>${esc(r.observer)}</td></tr><tr><td>Date</td><td>${esc(r.date)}</td></tr><tr><td>Photo ref</td><td>${esc(r.photo)}</td></tr></table>
       <div class="btnrow"><button class="btn ghost" id="pDel">Delete this pin</button></div>` : `<p class="note">Element-level record: the source gives no position on the element.</p>`}`;
   if ($("pDel")) $("pDel").onclick = () => { PINS = PINS.filter(p => p.id !== r.id); savePins(); indexRecs(); buildPins(); colorModel(); showConditions(); };
 }
@@ -461,12 +467,12 @@ function showElement(id){
   const e = EL.get(id), recs = recsBy.get(id) || [];
   panel.innerHTML = tabs() + `<button class="back" data-tab="building">‹ Building</button><div><h2>${esc(e.name)}</h2><p class="m note" style="font-family:var(--mono)">${esc(id)} · ${esc(e.kind)}${e.face ? " · faces " + esc(e.face) : ""}</p></div>
     <table class="kv"><tr><td>Geometry source</td><td>${esc(e.src)}</td></tr>${e.host ? `<tr><td>On wall</td><td><a href="#" data-el="${esc(e.host)}">${esc(e.host)}</a></td></tr>` : ""}
-    <tr><td>Height range</td><td>${e.bbox[0][1].toFixed(1)} – ${e.bbox[1][1].toFixed(1)} m vs datum ${FR.grade.toFixed(2)} m NAVD88${e.frame ? `<div class="note">ground at this wall: ${e.frame.base >= 0 ? "+" : ""}${e.frame.base.toFixed(2)} m</div>` : ""}</td></tr>${e.note ? `<tr><td>Note</td><td>${esc(e.note)}</td></tr>` : ""}</table>
+    ${e.seg ? Object.entries(e.seg).filter(([k]) => k !== "id").map(([k, v]) => `<tr><td>${esc(k.replace(/_/g, " "))}</td><td>${esc(v)}</td></tr>`).join("") : ""}${e.tree ? Object.entries(e.tree).filter(([k]) => k !== "id").map(([k, v]) => `<tr><td>${esc(k.replace(/_/g, " "))}</td><td>${esc(v)}</td></tr>`).join("") : ""}<tr><td>Height range</td><td>${e.bbox[0][1].toFixed(1)} – ${e.bbox[1][1].toFixed(1)} m vs datum ${FR.grade.toFixed(2)} m NAVD88${e.frame && e.frame.base != null ? `<div class="note">ground at this wall: ${e.frame.base >= 0 ? "+" : ""}${e.frame.base.toFixed(2)} m</div>` : ""}</td></tr>${e.note ? `<tr><td>Note</td><td>${esc(e.note)}</td></tr>` : ""}</table>
     <div><h3>Condition records (${recs.length})</h3><div style="display:grid;gap:8px">${recs.map(recHTML).join("") || '<p class="note">None yet. Use ✚ Add condition to pin one.</p>'}</div></div>`;
 }
 function pinForm(id, point){
   const e = EL.get(id), uv = wallUV(e, point), V = S.vocabulary; const cats = Object.keys(V).filter(k => k !== "_doc");
-  panel.innerHTML = tabs() + `<div><h2>New condition pin</h2><p class="sub">On <b>${esc(e.name)}</b> (${esc(id)})${uv ? `, u ${uv[0]} m along the wall, v ${uv[1]} m above the ground at this wall` : `, ${point.y.toFixed(1)} m above datum`}</p></div>
+  panel.innerHTML = tabs() + `<div><h2>New condition pin</h2><p class="sub">On <b>${esc(e.name)}</b> (${esc(id)})${uv ? (e.frame.kind === "path" ? `, ${uv[0]} m along the walk, ${uv[1]} m across` : `, u ${uv[0]} m along the wall, v ${uv[1]} m above the ground at this wall`) : `, ${point.y.toFixed(1)} m above datum`}</p></div>
     <form class="form" id="pf"><label>Category<select id="fCat">${cats.map(c => `<option>${esc(c)}</option>`).join("")}</select></label>
       <label>Type<select id="fType"></select></label>
       <label>Severity<select id="fSev"><option>critical</option><option>high</option><option selected>medium</option><option>low</option><option>unknown</option></select></label>
@@ -514,7 +520,7 @@ function showHistory(){
     <div><h3>Facts</h3><ul class="plain sub">${(H.facts || []).map(f => `<li>${esc(f.fact)} <span class="tag ${f.status === "confirmed" ? "" : "warn"}">${esc(f.status)}</span>${f.source_url ? ` <a href="${esc(f.source_url)}" target="_blank" rel="noopener">source</a>` : ""}</li>`).join("")}</ul></div>
     ${(H.aerials || []).length ? `<div><h3>Historic aerials at the site</h3><table class="kv">${H.aerials.map(a => `<tr><td>${esc(a.year)}</td><td>${esc(String(a.building_present))}<div class="note">${esc(a.source)} ${esc(a.frame_id || "")}. ${esc(a.notes || "")}</div></td></tr>`).join("")}</table></div>` : ""}
     ${(S.aerialCrops || []).length ? `<div class="thumbs">${S.aerialCrops.map(a => `<figure><img data-src="${esc(a.file)}" alt="${esc(a.caption)}"><figcaption>${esc(a.caption)}</figcaption></figure>`).join("")}</div>` : ""}`;
-  panel.querySelectorAll("img[data-src]").forEach(async i => { i.src = await imgURL(i.dataset.src); });
+  panel.querySelectorAll("img[data-src]").forEach(async i => { i.src = await imgURL(i.dataset.src); i.style.cursor = "zoom-in"; i.title = "Open full size"; i.onclick = () => window.open(i.src, "_blank", "noopener"); });
 }
 function showSources(){
   tab = "sources";
@@ -526,11 +532,12 @@ function showSources(){
 function legend(){
   const L = $("legend"), M = COLORS[cMode], hex = c => "#" + c.toString(16).padStart(6, "0");
   const KINDS = new Set([...EL.values()].map(e => e.kind));
-  const names0 = cMode === "material" ? {wall:"masonry wall", parapet:"parapet", roof:"pitched roof", flatroof:"flat roof", chimney:"chimney", window:"window", door:"door", floor:"floor plate (assumed)", interior:"interior wall (Sanborn)", foundation:"foundation / retaining", porch:"porch deck", context:"context massing"} :
+  const names0 = cMode === "material" ? {wall:"masonry wall", parapet:"parapet", roof:"pitched roof", flatroof:"flat roof", chimney:"chimney", window:"window", door:"door", floor:"floor plate (assumed)", interior:"interior wall (Sanborn)", walk:"walkway segment", tree:"tree crown (lidar)", foundation:"foundation / retaining", porch:"porch deck", context:"context massing"} :
     cMode === "severity" ? {critical:"critical", high:"high", medium:"medium", low:"low", unknown:"unknown", none:"no record"} :
     cMode === "status" ? {conflicting:"sources conflict", reported:"reported (document)", "observed-lidar":"measured from lidar", "observed-imagery":"seen in imagery", withheld:"withheld (consent pending)", site:"field pin", verified:"verified", none:"no record"} :
-    {lidar:"lidar fit", sanborn:"Sanborn 1903/09 map", "lidar+oblique":"lidar + oblique", "lidar+assumed":"lidar + assumed", oblique:"traced from oblique", "oblique+assumed":"oblique + assumed", assumed:"assumed"};
-  const names = cMode === "material" ? Object.fromEntries(Object.entries(names0).filter(([k]) => KINDS.has(k))) : names0;
+    {lidar:"lidar fit", photo:"confirmed in a photo", "imagery-trace":"traced from vertical imagery", sanborn:"Sanborn 1903/09 map", "lidar+oblique":"lidar + oblique", "lidar+assumed":"lidar + assumed", oblique:"traced from oblique", "oblique+assumed":"oblique + assumed", assumed:"assumed"};
+  const SRCS = new Set([...EL.values()].map(e => e.src));
+  const names = cMode === "material" ? Object.fromEntries(Object.entries(names0).filter(([k]) => KINDS.has(k))) : cMode === "source" ? Object.fromEntries(Object.entries(names0).filter(([k]) => SRCS.has(k))) : names0;
   L.innerHTML = `<b>${{material:"Material", severity:"Worst severity", status:"Condition status", source:"Geometry source"}[cMode]}</b>` + Object.entries(names).map(([k, n]) => `<span><i style="background:${hex(M[k])}"></i>${esc(n)}</span>`).join("");
 }
 $("cMode").onchange = e => { cMode = e.target.value; colorModel(); };
@@ -563,7 +570,7 @@ async function boot(){
     S = await getJSON("site.json"); FR = S.frame; GRADE = FR.grade;
     S.elements.forEach(e => EL.set(e.id, e));
     for (const [k, v] of Object.entries(S.meta.colors || {})) COLORS.material[k] = parseInt(v.replace("#", ""), 16);
-    if (S.elements.some(e => e.kind === "context")) $("ctxTog").hidden = false;
+    if (S.elements.some(e => e.kind === "context" || e.kind === "tree")) $("ctxTog").hidden = false;
     dem = new Float32Array(await getBuf("terrain.f32"));
     TGT = new THREE.Vector3(FR.cx, 6, -FR.cy);
     const sel = $("iMode"); sel.innerHTML = Object.entries(S.imagery).filter(([k, v]) => v.file).map(([k, v]) => `<option value="${k}">${esc(v.label.split(" (")[0])}</option>`).join("");
