@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>St. John Parish House Twin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bitter:wght@500;700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#f2f3ef; --surface:#ffffff; --ink:#1b211d; --ink-2:#48524b; --muted:#6f7a72; --line:#dce1db; --grid:#edf0ec;
+  --accent:#2f6b3f; --accent-soft:#e3eee5; --stage:#12161a; --stage-ink:#e6ebe6; --warn:#a86a00;
+  --c-lodge:#c98a4b; --c-new:#3f86c9; --c-amb:#b0569c; --c-none:#8a918c;
+  --sans:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --serif:Bitter,Georgia,serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){ --bg:#0f1311; --surface:#171d1a; --ink:#e8ede9; --ink-2:#b4beb7; --muted:#8a958e; --line:#2a322d; --grid:#212824;
+    --accent:#86c79a; --accent-soft:#1e2b23; --warn:#e2a93a; color-scheme:dark; }
+}
+:root[data-theme="dark"]{ --bg:#0f1311; --surface:#171d1a; --ink:#e8ede9; --ink-2:#b4beb7; --muted:#8a958e; --line:#2a322d; --grid:#212824;
+  --accent:#86c79a; --accent-soft:#1e2b23; --warn:#e2a93a; color-scheme:dark; }
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 var(--sans)}
+a{color:var(--accent)}
+button{font:inherit;color:inherit}
+button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1320px;margin:0 auto;padding:20px 16px 40px;display:grid;gap:14px}
+header.top{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:8px 24px}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:0}
+h1{font:700 clamp(22px,3vw,30px)/1.15 var(--serif);margin:2px 0 0;text-wrap:balance}
+.meta{color:var(--muted);font-size:13px;margin:0}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:14px;align-items:start}
+@media (max-width:960px){.layout{grid-template-columns:1fr}}
+.stage{position:relative;background:var(--stage);border-radius:10px;overflow:hidden;height:min(78vh,780px);min-height:420px}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+.status{position:absolute;inset:0;display:grid;place-items:center;color:var(--stage-ink);font-size:14px;padding:16px;text-align:center;pointer-events:none}
+.status pre{white-space:pre-wrap;text-align:left;font:12px/1.5 var(--mono);pointer-events:auto;user-select:text;max-width:100%}
+.ov{position:absolute;display:flex;gap:6px;z-index:2;pointer-events:none}
+.ov>*{pointer-events:auto}
+.ov.tl{top:10px;left:10px;flex-direction:column;align-items:flex-start;max-width:min(320px,calc(100% - 20px));max-height:calc(100% - 64px)}
+.ov.tr{top:10px;right:10px;flex-direction:column;align-items:flex-end;max-width:min(270px,calc(100% - 20px));max-height:calc(100% - 64px)}
+.ov.bl{left:10px;bottom:10px;flex-wrap:wrap;max-width:calc(100% - 20px)}
+.chip{background:rgba(18,22,26,.86);color:var(--stage-ink);border:1px solid rgba(230,235,230,.2);border-radius:6px;padding:5px 9px;font:600 12px var(--sans);display:inline-flex;align-items:center;gap:6px;cursor:pointer;white-space:nowrap}
+.chip:hover{border-color:rgba(230,235,230,.55)}
+.chip[aria-expanded="true"]{border-color:#86c79a}
+.drawer{background:rgba(18,22,26,.94);color:var(--stage-ink);border:1px solid rgba(230,235,230,.18);border-radius:8px;padding:6px 8px;display:grid;gap:2px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;width:max-content;max-width:100%}
+.drawer .grp{border-top:1px solid rgba(230,235,230,.1);padding:2px 0}
+.drawer .grp:first-child{border-top:0}
+.drawer summary{cursor:pointer;list-style:none;font:600 10px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:rgba(230,235,230,.62);padding:4px 2px}
+.drawer summary::-webkit-details-marker{display:none}
+.drawer summary::before{content:"▸";display:inline-block;width:12px;transition:transform .15s}
+.drawer details[open] summary::before{transform:rotate(90deg)}
+.drawer .row{display:flex;flex-wrap:wrap;align-items:center;gap:2px 10px;padding-left:12px}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.tog{display:flex;align-items:center;gap:8px;background:none;border:0;color:var(--stage-ink);font:500 13px var(--sans);padding:4px 4px;border-radius:5px;cursor:pointer;text-align:left}
+.tog:hover{background:rgba(255,255,255,.07)}
+.tog::before{content:"";flex:none;width:26px;height:14px;border-radius:7px;background:#4a524d;box-shadow:inset 0 0 0 1px rgba(255,255,255,.15);transition:background .15s}
+.tog[aria-pressed="true"]::before{background:#3f8f59 radial-gradient(circle at 19px 7px,#fff 5px,transparent 5.5px)}
+.tog[aria-pressed="false"]::before{background:#4a524d radial-gradient(circle at 7px 7px,#cfd5d0 5px,transparent 5.5px)}
+.sel{display:flex;align-items:center;gap:6px;font:500 12px var(--sans);color:rgba(230,235,230,.8);padding:2px 0}
+.sel select{background:#262c30;color:var(--stage-ink);border:1px solid rgba(230,235,230,.2);border-radius:5px;font:inherit;padding:2px 4px;max-width:190px}
+.sel input[type=range]{width:110px;accent-color:#86c79a}
+.legend{background:rgba(18,22,26,.88);color:var(--stage-ink);border-radius:8px;padding:8px 10px;font-size:12px;display:grid;gap:3px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.legend b{margin-top:4px}.legend b:first-child{margin-top:0}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.legend .ramp{height:9px;border-radius:3px;margin:2px 0}
+.credit{position:absolute;right:10px;bottom:12px;z-index:2;max-width:min(360px,45%);background:none;border:0;padding:2px 4px;color:rgba(230,235,230,.72);font:11px/1.35 var(--sans);text-align:right;text-shadow:0 1px 2px #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.credit[aria-expanded="true"]{white-space:normal;background:rgba(18,22,26,.9);border-radius:6px;padding:6px 8px;text-shadow:none}
+.layout.nopanel{grid-template-columns:minmax(0,1fr)}
+.layout.nopanel .panel{display:none}
+@media (max-width:960px){#btnPanel{display:none}}
+@media (max-width:600px){.credit{max-width:calc(100% - 20px);bottom:46px;left:10px;right:auto;text-align:left}.ov.tr{max-width:calc(100% - 110px)}}
+.labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lbl{position:absolute;transform:translate(-50%,-100%);white-space:nowrap;font:600 11px var(--sans);color:#fff;background:rgba(18,22,26,.72);padding:2px 6px;border-radius:4px;pointer-events:auto;cursor:pointer;border:1px solid transparent}
+.lbl:hover,.lbl.sel{border-color:#86c79a}
+.lbl.bld{background:rgba(47,107,63,.88)}
+.lbl.obs{background:rgba(168,106,0,.9)}
+.lbl.cam{background:#f2c200;color:#1b1b1b}
+.tl-photo{position:relative;border-radius:8px;overflow:hidden;background:var(--grid);aspect-ratio:2/1}
+.tl-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.tl-photo .d{position:absolute;left:8px;bottom:8px;background:rgba(0,0,0,.65);color:#fff;font:500 12px var(--mono);padding:2px 7px;border-radius:4px}
+.tl-ctl{display:flex;gap:8px;align-items:center}
+.tl-ctl input{flex:1;accent-color:var(--accent)}
+.tl-ctl button{background:var(--accent);color:var(--surface);border:0;border-radius:6px;padding:4px 10px;font-weight:600;cursor:pointer}
+.strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:4px}
+.strip button{padding:0;border:2px solid transparent;border-radius:4px;overflow:hidden;background:none;cursor:pointer;aspect-ratio:2/1}
+.strip button[aria-current="true"]{border-color:var(--accent)}
+.strip img{width:100%;height:100%;object-fit:cover;display:block}
+.cams{display:grid;gap:8px}
+.camrow{display:grid;grid-template-columns:96px 1fr;gap:10px;align-items:center;background:none;border:1px solid var(--line);border-radius:8px;padding:6px;text-align:left;cursor:pointer}
+.camrow:hover{border-color:var(--accent)}
+.camrow img{width:96px;height:48px;object-fit:cover;border-radius:4px;background:var(--grid)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:14px;align-content:start;min-width:0;max-height:min(78vh,780px);overflow:auto}
+@media (max-width:960px){.panel{max-height:none}}
+.panel h2{font:700 19px/1.2 var(--serif);margin:0}
+.panel h3{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+.panel p{margin:0 0 6px}
+.sub{color:var(--ink-2);font-size:13px}
+.back{justify-self:start;background:none;border:0;padding:0;color:var(--accent);font-size:13px;font-weight:600;cursor:pointer}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.facts>div{background:var(--surface);padding:8px 10px;display:grid;gap:1px;min-width:0}
+.facts .k{font-size:11px;color:var(--muted)}
+.facts .v{font:500 15px var(--mono);font-variant-numeric:tabular-nums}
+.facts .s{font-size:11px;color:var(--muted)}
+.tl{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.tl li{display:grid;grid-template-columns:52px 1fr;gap:8px}
+.tl b{font:600 13px var(--mono);color:var(--accent)}
+ul.plain{margin:0;padding-left:18px}
+ul.plain li{margin:2px 0}
+.tag{display:inline-block;font-size:11px;font-weight:600;padding:1px 7px;border-radius:999px;background:var(--accent-soft);color:var(--accent);margin-left:4px}
+.tag.warn{background:rgba(168,106,0,.14);color:var(--warn)}
+.sightings{display:grid;gap:8px}
+.sight{display:grid;grid-template-columns:48px 1fr;gap:10px;align-items:center;text-decoration:none;color:inherit}
+.sight img{width:48px;height:48px;object-fit:cover;border-radius:6px;background:var(--grid)}
+.sight .n{font-weight:600}
+.sight .m{font-size:12px;color:var(--muted)}
+.split{display:flex;height:10px;border-radius:5px;overflow:hidden;margin:6px 0}
+.split i{display:block;height:100%}
+.note{font-size:12px;color:var(--muted)}
+table.kv{border-collapse:collapse;width:100%;font-size:12px}
+table.kv td{border-bottom:1px solid var(--grid);padding:4px 6px;vertical-align:top}
+table.kv td:first-child{color:var(--muted);white-space:nowrap}
+details summary{cursor:pointer;color:var(--ink-2);font-weight:600;font-size:13px}
+.about{font-size:13px;color:var(--ink-2);max-width:90ch}
+#gate{position:fixed;inset:0;z-index:50;background:var(--bg);display:grid;place-items:center;padding:16px}
+#gate form{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:24px;display:grid;gap:12px;width:min(380px,100%)}
+#gate input[type=password]{font:inherit;font-size:15px;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+#gate button{background:var(--accent);color:var(--surface);border:0;border-radius:8px;padding:9px;font-weight:600;cursor:pointer}
+
+/* element-twin additions */
+.tabs{display:flex;flex-wrap:wrap;gap:4px;border-bottom:1px solid var(--line);padding-bottom:8px}
+.tabs button{background:none;border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:12px;font-weight:600;color:var(--ink-2);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.crec{border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:grid;gap:4px;cursor:pointer;background:none;text-align:left;font:inherit;color:inherit}
+.crec:hover,.crec.sel{border-color:var(--accent)}
+.crec,.crec *{min-width:0;overflow-wrap:anywhere}
+table.kv td{overflow-wrap:anywhere}
+.crec .h{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-weight:600;font-size:13px}
+.crec .t{font-size:12px;color:var(--ink-2)}
+.crec .m{font-size:11px;color:var(--muted);font-family:var(--mono)}
+.pill{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.03em;padding:1px 7px;border-radius:999px;color:#fff;white-space:nowrap}
+.st-reported{background:#6b6f9e}.st-observed-lidar{background:#3f6fb0}.st-withheld{background:#555b61}.st-conflicting{background:#b3261e}.st-observed-imagery{background:#1f7a8c}.st-verified{background:#2f7d3a}.st-site{background:#8a5a00}
+.sv-critical{background:#8e1b1b}.sv-high{background:#c2410c}.sv-medium{background:#b08900}.sv-low{background:#5b7f5b}.sv-unknown{background:#7a7f86}
+.filters{display:flex;flex-wrap:wrap;gap:4px}
+.filters button{font-size:11px;border:1px solid var(--line);background:none;border-radius:999px;padding:2px 8px;cursor:pointer;color:var(--ink-2)}
+.filters button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.obl img{width:100%;border-radius:8px;display:block;background:var(--grid)}
+.obl .ctl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0}
+.obl input[type=range]{flex:1;accent-color:var(--accent)}
+.form{display:grid;gap:8px}
+.form label{display:grid;gap:3px;font-size:12px;color:var(--ink-2)}
+.form select,.form input,.form textarea{font:inherit;font-size:13px;padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)}
+.btnrow{display:flex;gap:6px;flex-wrap:wrap}
+.btn{background:var(--accent);color:var(--surface);border:0;border-radius:6px;padding:5px 11px;font-weight:600;cursor:pointer;font-size:13px}
+.btn.ghost{background:none;color:var(--accent);border:1px solid var(--accent)}
+.chip.on{border-color:#f2c200;color:#f2c200}
+.lbl.pin{background:#f2c200;color:#1b1b1b}
+.lbl.pin.conf{background:#b3261e;color:#fff}
+.warnbox{border-left:3px solid var(--warn);background:rgba(168,106,0,.08);padding:6px 10px;border-radius:0 6px 6px 0;font-size:12.5px}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px}
+.thumbs figure{margin:0;font-size:11px;color:var(--muted)}
+.thumbs img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;background:var(--grid);display:block}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Penn State Heritage 3D Lab · Digital Twin Hub</p>
+      <h1>St. John Chrysostom Parish House</h1>
+    </div>
+    <p class="meta" id="meta">506 Saline Street · The Run (Greenfield), Pittsburgh, PA</p>
+  </header>
+  <main class="layout">
+    <section class="stage" aria-label="3D building model">
+      <canvas id="c" aria-label="Interactive 3D element model of St. John Chrysostom Parish House with condition records"></canvas>
+      <div class="labels" id="labels"></div>
+      <div class="status" id="status">Loading…</div>
+      <div class="ov tl">
+        <button class="chip" id="btnLayers" type="button" aria-expanded="false" aria-controls="drawer">☰ Layers</button>
+        <div class="drawer" id="drawer" hidden>
+          <details class="grp" open><summary>Base</summary>
+            <div class="row"><button class="tog" data-layer="terrain" aria-pressed="true">Terrain</button><button class="tog" data-layer="context" aria-pressed="true" id="ctxTog" hidden>Neighbours</button><label class="sel" id="imgChip"><span class="vh">Imagery</span><select id="iMode" aria-label="Imagery"></select></label></div></details>
+          <details class="grp" open><summary>Model</summary>
+            <div class="row"><button class="tog" data-layer="walls" aria-pressed="true">Walls</button><button class="tog" data-layer="roofs" aria-pressed="true">Roofs</button><button class="tog" data-layer="windows" aria-pressed="true">Openings</button></div>
+            <div class="row"><button class="tog" data-layer="floors" aria-pressed="false">Interior (floors, cross walls)</button><button class="tog" data-layer="pins" aria-pressed="true">Field pins</button></div>
+            <div class="row"><label class="sel">Colour <select id="cMode" aria-label="Model colour"><option value="material">material</option><option value="severity">worst condition severity</option><option value="status">condition status</option><option value="source">geometry source</option></select></label></div></details>
+          <details class="grp"><summary>Lidar points</summary>
+            <div class="row"><button class="tog" data-layer="points" aria-pressed="false">2024 (29.5 pts/m²)</button><button class="tog" data-layer="points06" aria-pressed="false">2006–08 (0.45/m²)</button></div>
+            <div class="row"><label class="sel">Size <input id="pSize" type="range" min="0.5" max="5" step="0.1" value="2.2"></label></div></details>
+        </div>
+      </div>
+      <div class="ov tr">
+        <button class="chip" id="btnPanel" type="button" aria-expanded="true" aria-controls="panel">Hide details ⟩</button>
+        <button class="chip" id="btnLegend" type="button" aria-expanded="true" aria-controls="legend">Legend</button>
+        <div class="legend" id="legend"></div>
+      </div>
+      <div class="ov bl bar" role="toolbar" aria-label="View">
+        <button class="chip" id="vHome">Home</button>
+        <button class="chip" id="vTop">Top</button>
+        <button class="chip" data-face="W">West</button><button class="chip" data-face="S">South</button><button class="chip" data-face="E">East</button><button class="chip" data-face="N">North</button>
+        <button class="chip" id="btnPin" aria-pressed="false" title="Click the model to drop a condition pin">✚ Add condition</button>
+      </div>
+      <button class="credit" id="imgnote" type="button" aria-expanded="false" title="Imagery credit"></button>
+    </section>
+    <aside class="panel" id="panel" aria-label="Details"></aside>
+  </main>
+  <details class="about">
+    <summary>About this model and its data</summary>
+    <div id="about"></div>
+  </details>
+</div>
+
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]);
+
+// ---------------------------------------------------------------- data access (plain in dev, AES-GCM behind the gate when published)
+let KEY = null;
+const DATA = "data/";
+async function getBuf(name){
+  const url = DATA + name + (KEY ? ".enc" : "");
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
+  const buf = await res.arrayBuffer();
+  if (!KEY) return buf;
+  const u = new Uint8Array(buf);
+  return crypto.subtle.decrypt({name:"AES-GCM", iv:u.slice(0, 12)}, KEY, u.slice(12));
+}
+const getJSON = async n => JSON.parse(new TextDecoder().decode(await getBuf(n)));
+const blobURL = new Map();
+async function imgURL(name){
+  if (!KEY) return DATA + name;
+  if (!blobURL.has(name)) blobURL.set(name, URL.createObjectURL(new Blob([await getBuf(name)], {type:"image/jpeg"})));
+  return blobURL.get(name);
+}
+const statusEl = $("status");
+function report(what, e){ console.error(e); statusEl.hidden = false; statusEl.innerHTML = `<pre>Couldn't load ${esc(what)}:\n${esc(e && e.message || e)}</pre>`; }
+
+// ---------------------------------------------------------------- three.js scene (Y up: X = east, Y = height above grade, Z = −north)
+const canvas = $("c");
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x12161a);
+const camera = new THREE.PerspectiveCamera(40, 1, 0.3, 3000);
+const controls = new OrbitControls(camera, canvas); controls.enableDamping = true; controls.maxPolarAngle = Math.PI * 0.495;
+scene.add(new THREE.HemisphereLight(0xdfe8ff, 0x3a3226, 1.1));
+const sun = new THREE.DirectionalLight(0xffffff, 1.6); sun.position.set(-60, 90, 40); scene.add(sun);
+function resize(){ const r = canvas.parentElement.getBoundingClientRect(); renderer.setSize(r.width, r.height, false); camera.aspect = r.width / r.height; camera.updateProjectionMatrix(); }
+new ResizeObserver(resize).observe(canvas.parentElement);
+
+const layers = {context:new THREE.Group(), terrain:new THREE.Group(), walls:new THREE.Group(), roofs:new THREE.Group(), windows:new THREE.Group(), floors:new THREE.Group(),
+                points:new THREE.Group(), points06:new THREE.Group(), pins:new THREE.Group()};
+Object.values(layers).forEach(g => scene.add(g));
+layers.floors.visible = layers.points.visible = layers.points06.visible = false;
+
+let S, FR, GRADE, dem, CX = 0, CY = 0;
+const meshes = new Map();           // element id -> mesh
+const EL = new Map();               // element id -> element record
+const recsBy = new Map();           // element id -> [condition records]
+let selected = null, pinMode = false, cMode = "material";
+const SEVR = {critical:4, high:3, medium:2, low:1, unknown:0};
+const COLORS = {
+  material:{interior:0xb07860, foundation:0x8f8f89, porch:0xa9a9a3, context:0x8c8278, wall:0xa8543c, parapet:0x96503a, roof:0x4a5058, flatroof:0x606468, chimney:0x8c4634, floor:0xc8b48c, window:0xe2e8ec, door:0x6e563c, ground:0x786e5a},
+  severity:{critical:0x8e1b1b, high:0xc2410c, medium:0xd4a800, low:0x5b8f5b, unknown:0x8a9097, none:0x3b4148},
+  status:{conflicting:0xd13a30, reported:0x7d82c4, "observed-imagery":0x2fa3b8, "observed-lidar":0x4f8fe0, withheld:0x6a7076, verified:0x3a9a48, site:0xd08a00, none:0x3b4148},
+  source:{sanborn:0x7a5ab8, "lidar+assumed":0x8a78c0, lidar:0x3f86c9, "lidar+oblique":0x6aa8d8, oblique:0xe0a040, "oblique+assumed":0xd07a40, assumed:0xb0569c}
+};
+const localToWorld = (x, y, h) => new THREE.Vector3(x, h, -y);
+
+// ---------------------------------------------------------------- terrain (±150 m of the 1 km 2 m DEM), imagery draped
+const HALF = 150;
+async function buildTerrain(){
+  const N = 501, PX = 2, n = HALF / PX * 2 + 1, off = (N - 1) / 2 - HALF / PX;
+  const g = new THREE.PlaneGeometry(2 * HALF, 2 * HALF, n - 1, n - 1); g.rotateX(-Math.PI / 2);
+  const p = g.attributes.position;
+  for (let i = 0; i < p.count; i++){
+    const x = p.getX(i), z = p.getZ(i), r = Math.round((HALF + z) / PX) + off, c = Math.round((x + HALF) / PX) + off;   // z = −north → row from top
+    p.setY(i, dem[r * N + c] - GRADE - 0.05);
+  }
+  g.computeVertexNormals();
+  const mat = new THREE.MeshLambertMaterial({color:0xffffff});
+  layers.terrain.add(new THREE.Mesh(g, mat));
+  await setImagery(S.imagery.nearmap ? "nearmap" : "naip");
+}
+async function setImagery(k){
+  const im = S.imagery[k]; if (!im) return;
+  const tex = await new THREE.TextureLoader().loadAsync(await imgURL(im.file)); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
+  const m = layers.terrain.children[0].material; m.map = tex; m.needsUpdate = true;
+  $("imgnote").textContent = "Imagery: " + im.label;
+}
+
+// ---------------------------------------------------------------- lidar points
+async function buildPoints(name, group, dim){
+  const buf = await getBuf(name), n = buf.byteLength / 16, dv = new DataView(buf);
+  const pos = new Float32Array(n * 3), col = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++){
+    const x = dv.getFloat32(i * 16, true), y = dv.getFloat32(i * 16 + 4, true), z = dv.getFloat32(i * 16 + 8, true), c = dv.getUint8(i * 16 + 12);
+    pos[i*3] = x; pos[i*3+1] = z - GRADE; pos[i*3+2] = -y;
+    const h = Math.max(0, Math.min(1, (z - GRADE) / 15)); const cc = c === 2 ? [0.55, 0.47, 0.35] : [0.25 + 0.75 * h, 0.9 - 0.6 * h, 1 - h];
+    col[i*3] = cc[0] * dim; col[i*3+1] = cc[1] * dim; col[i*3+2] = cc[2] * dim;
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3)); g.setAttribute("color", new THREE.BufferAttribute(col, 3));
+  const m = new THREE.PointsMaterial({size:+$("pSize").value, vertexColors:true, sizeAttenuation:false});
+  group.add(new THREE.Points(g, m));
+}
+
+// ---------------------------------------------------------------- element model
+function layerOf(kind){ return kind === "context" ? "context" : kind === "interior" ? "floors" : kind === "roof" || kind === "flatroof" || kind === "chimney" ? "roofs" : kind === "window" || kind === "door" ? "windows" : kind === "floor" ? "floors" : "walls"; }
+async function buildModel(){
+  const buf = await getBuf("model.glb");
+  const gltf = await new GLTFLoader().parseAsync(buf, "");
+  const list = [];
+  gltf.scene.traverse(o => { if (o.isMesh) list.push(o); });
+  for (const o of list){
+    const id = o.name || o.parent?.name, e = EL.get(id); if (!e) continue;
+    o.geometry.deleteAttribute("color");
+    o.material = new THREE.MeshStandardMaterial({color:0xffffff, roughness:0.85, metalness:0, flatShading:true, transparent:e.kind === "floor" || e.kind === "ground" || e.kind === "interior",
+      opacity:e.kind === "floor" ? 0.55 : e.kind === "interior" ? 0.7 : e.kind === "ground" ? 0 : 1, side:THREE.DoubleSide, polygonOffset:e.kind === "window" || e.kind === "door", polygonOffsetFactor:-2});
+    o.updateWorldMatrix(true, false);
+    const g = o.geometry.clone().applyMatrix4(o.matrixWorld).toNonIndexed(); g.computeVertexNormals();
+    const w = new THREE.Mesh(g, o.material); w.userData.id = id;
+    if (e.kind !== "ground") layers[layerOf(e.kind)].add(w);
+    meshes.set(id, w);
+  }
+  colorModel();
+}
+function worstRec(id){ const r = recsBy.get(id) || []; return r.reduce((a, b) => (!a || SEVR[b.severity] > SEVR[a.severity]) ? b : a, null); }
+function statusOf(id){ const r = recsBy.get(id) || []; for (const s of ["conflicting", "site", "verified", "reported", "observed-lidar", "observed-imagery", "withheld"]) if (r.some(x => x.status === s)) return s; return "none"; }
+function colorModel(){
+  for (const [id, m] of meshes){
+    const e = EL.get(id); let c;
+    if (cMode === "material" || e.kind === "window" && cMode !== "source" && !(recsBy.get(id) || []).length) c = COLORS.material[e.kind];
+    else if (cMode === "severity"){ const w = worstRec(id); c = COLORS.severity[w ? w.severity : "none"]; }
+    else if (cMode === "status") c = COLORS.status[statusOf(id)];
+    else c = COLORS.source[e.src] ?? 0x888888;
+    m.material.color.setHex(c ?? 0x888888);
+    m.material.emissive.setHex(id === selected ? 0x554400 : 0x000000);
+  }
+  legend();
+}
+
+// ---------------------------------------------------------------- condition records (seeded + field pins in this browser)
+const PINKEY = "stjohn-twin-pins-v1";
+let PINS = [];
+function loadPins(){ try { PINS = JSON.parse(localStorage.getItem(PINKEY) || "[]"); } catch(e){ PINS = []; } }
+function savePins(){ try { localStorage.setItem(PINKEY, JSON.stringify(PINS)); } catch(e){ console.warn("pins not saved", e); } }
+function allRecs(){ return S.conditions.concat(PINS); }
+function indexRecs(){
+  recsBy.clear();
+  for (const r of allRecs()) for (const id of r.elements) { if (!recsBy.has(id)) recsBy.set(id, []); recsBy.get(id).push(r); }
+}
+function buildPins(){
+  layers.pins.clear(); pinLabels.length = 0;
+  for (const p of PINS){
+    const s = new THREE.Mesh(new THREE.SphereGeometry(0.28, 12, 8), new THREE.MeshBasicMaterial({color:0xf2c200}));
+    s.position.fromArray(p.world); layers.pins.add(s);
+    pinLabels.push({pos:s.position, text:p.type, id:p.id});
+  }
+}
+function toBuilding(v){   // world -> building frame (a, b, h)
+  const x = v.x - FR.cx, y = -v.z - FR.cy, t = FR.theta_deg * Math.PI / 180, c = Math.cos(t), s = Math.sin(t);
+  return [x * c + y * s, -x * s + y * c, v.y];
+}
+function wallUV(e, v){
+  if (!e.frame) return null;
+  const [a, b, h] = toBuilding(v), o = e.frame.origin, d = e.frame.dir;
+  return [+(((a - o[0]) * d[0] + (b - o[1]) * d[1])).toFixed(2), +(h - (e.frame.base || 0)).toFixed(2)];
+}
+
+// ---------------------------------------------------------------- labels (HTML overlay for field pins)
+const pinLabels = [];
+function placeLabels(){
+  const box = $("labels"); const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (!layers.pins.visible){ box.innerHTML = ""; return; }
+  let html = "";
+  for (const L of pinLabels){
+    const p = L.pos.clone().project(camera); if (p.z > 1) continue;
+    html += `<span class="lbl pin" style="left:${(p.x + 1) / 2 * w}px;top:${(1 - p.y) / 2 * h - 8}px" data-pin="${esc(L.id)}">${esc(L.text)}</span>`;
+  }
+  box.innerHTML = html;
+}
+$("labels").addEventListener("click", e => { const t = e.target.closest("[data-pin]"); if (t){ const p = PINS.find(x => x.id === t.dataset.pin); if (p) showRecord(p); } });
+
+// ---------------------------------------------------------------- picking
+const ray = new THREE.Raycaster(); const ndc = new THREE.Vector2(); let down = null;
+canvas.addEventListener("pointerdown", e => { down = [e.clientX, e.clientY]; });
+canvas.addEventListener("pointerup", e => {
+  if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 5) return;
+  const r = canvas.getBoundingClientRect(); ndc.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  const vis = [...meshes.values()].filter(m => m.parent && m.parent.visible);
+  const hit = ray.intersectObjects(vis, false)[0];
+  if (!hit){ if (!pinMode) showBuilding(); return; }
+  const id = hit.object.userData.id;
+  if (pinMode) return pinForm(id, hit.point);
+  select(id);
+});
+function select(id){ selected = id; colorModel(); showElement(id); }
+
+// ---------------------------------------------------------------- panel
+const panel = $("panel");
+let tab = "building";
+function tabs(){
+  const T = [["building", "Building"], ["conditions", "Conditions"], ["imagery", "Imagery"], ["history", "History"], ["sources", "Sources"]].filter(t => t[0] !== "imagery" || S.imagery.obliques);
+  return `<div class="tabs" role="tablist">${T.map(([k, n]) => `<button role="tab" data-tab="${k}" aria-selected="${k === tab}">${n}</button>`).join("")}</div>`;
+}
+panel.addEventListener("click", e => {
+  const t = e.target.closest("[data-tab]"); if (t){ tab = t.dataset.tab; selected = null; colorModel(); return render(); }
+  const el = e.target.closest("[data-el]"); if (el){ select(el.dataset.el); return; }
+  const rc = e.target.closest("[data-rec]"); if (rc){ const r = allRecs().find(x => x.id === rc.dataset.rec); if (r) showRecord(r); return; }
+  const f = e.target.closest("[data-filter]"); if (f){ const k = f.dataset.filter; FILTER[k] = !FILTER[k]; return render(); }
+});
+function render(){ ({building:showBuilding, conditions:showConditions, imagery:showImagery, history:showHistory, sources:showSources})[tab](); }
+const pill = (cls, t) => `<span class="pill ${cls}">${esc(t)}</span>`;
+function recHTML(r){
+  return `<button class="crec" data-rec="${esc(r.id)}"><span class="h">${pill("sv-" + r.severity, r.severity)} ${pill("st-" + r.status, r.status)} ${esc(r.type)}</span>
+    <span class="t">${esc(r.text)}</span><span class="m">${esc(r.id)} · ${esc(r.category)} · ${esc((r.sources || []).join(", "))} · ${r.precision === "point" ? "pinned" : esc(r.elements.length + " element(s)")}</span></button>`;
+}
+function showBuilding(){
+  tab = "building";
+  const F = S.fit;
+  panel.innerHTML = tabs() + `<div><h2>${esc(S.meta.name)}</h2><p class="sub">${esc(S.meta.intro)}</p></div>
+    ${S.meta.warn ? `<div class="warnbox">${S.meta.warn}</div>` : ""}
+    <div><h3>Measured and sourced</h3><table class="kv">${S.facts.map(f => `<tr><td>${esc(f.k)}</td><td>${esc(f.v)}<div class="note">${esc(f.s)}</div></td></tr>`).join("")}</table></div>
+    <div><h3>How to use</h3><ul class="plain sub"><li>Click any wall, roof plane, parapet or window to see its ID, where its geometry came from, and the condition records attached to it.</li>
+      <li>Colour by <b>condition status</b> to see where the 2021 reports conflict (red) and what is only reported (blue).</li>
+      <li><b>✚ Add condition</b> drops a pin at the exact spot you click. Pins record the element ID and the position on the wall: u metres along from the left corner (seen from outside), v metres above the ground at that wall. That is what a tape measure on site gives you.</li></ul></div>
+    <div><h3>Model limits</h3><p class="note">This is a massing model at about ±0.5 m (lidar 3.7 pts/m²). Wall thickness (${S.wall_thickness} m), floor levels and parapet height are assumed. Windows are placed by count from 2026 oblique photos with even spacing, so they are approximate. The stairs have no geometry because their location is unknown.</p></div>`;
+}
+const FILTER = {conflicting:true, reported:true, "observed-lidar":true, "observed-imagery":true, withheld:true, verified:true, site:true};
+function showConditions(){
+  tab = "conditions";
+  const recs = allRecs().filter(r => FILTER[r.status]).sort((a, b) => SEVR[b.severity] - SEVR[a.severity]);
+  panel.innerHTML = tabs() + `<div><h2>Condition records</h2><p class="sub">${S.conditions.length} seeded from documents, lidar and dated imagery (each says which), plus ${PINS.length} field pin(s) in this browser.</p></div>
+    <div class="filters">${Object.keys(FILTER).filter(k => allRecs().some(r => r.status === k)).map(k => `<button data-filter="${k}" aria-pressed="${FILTER[k]}">${k}</button>`).join("")}</div>
+    <div style="display:grid;gap:8px">${recs.map(recHTML).join("") || '<p class="note">No records match.</p>'}</div>
+    <div><h3>Field pins</h3><p class="note">Pins are kept only in this browser until you export them. Export after every session and put the JSON in the project repo.</p>
+      <div class="btnrow"><button class="btn" id="pExport">Export pins (JSON)</button><label class="btn ghost" style="cursor:pointer">Import…<input id="pImport" type="file" accept=".json,application/json" hidden></label>${PINS.length ? '<button class="btn ghost" id="pClear">Clear pins</button>' : ""}</div></div>`;
+  $("pExport").onclick = () => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify({building:S.meta.name, exported:new Date().toISOString(), pins:PINS}, null, 1)], {type:"application/json"})); a.download = `abbeypress-pins-${new Date().toISOString().slice(0, 10)}.json`; a.click(); };
+  $("pImport").onchange = async e => { try { const j = JSON.parse(await e.target.files[0].text()); const inc = (j.pins || j).filter(p => p.id && !PINS.some(q => q.id === p.id)); PINS.push(...inc); savePins(); indexRecs(); buildPins(); colorModel(); showConditions(); } catch(err){ alert("Couldn't read that file: " + err.message); } };
+  if ($("pClear")) $("pClear").onclick = () => { if (confirm("Delete all field pins in this browser? Export first if you need them.")){ PINS = []; savePins(); indexRecs(); buildPins(); colorModel(); showConditions(); } };
+}
+function showRecord(r){
+  selected = r.elements[0]; colorModel();
+  for (const id of r.elements){ const m = meshes.get(id); if (m) m.material.emissive.setHex(0x554400); }
+  panel.innerHTML = tabs() + `<button class="back" data-tab="conditions">‹ All conditions</button>${recHTML(r)}
+    <div><h3>Elements</h3><ul class="plain">${r.elements.map(id => `<li><a href="#" data-el="${esc(id)}">${esc(id)}</a>: ${esc(EL.get(id)?.name || "")}</li>`).join("")}</ul></div>
+    ${r.precision === "point" ? `<table class="kv"><tr><td>Position on wall</td><td>${r.uv ? `u ${r.uv[0]} m along, v ${r.uv[1]} m above local ground` : "—"}</td></tr><tr><td>Observer</td><td>${esc(r.observer)}</td></tr><tr><td>Date</td><td>${esc(r.date)}</td></tr><tr><td>Photo ref</td><td>${esc(r.photo)}</td></tr></table>
+      <div class="btnrow"><button class="btn ghost" id="pDel">Delete this pin</button></div>` : `<p class="note">Element-level record: the source gives no position on the element.</p>`}`;
+  if ($("pDel")) $("pDel").onclick = () => { PINS = PINS.filter(p => p.id !== r.id); savePins(); indexRecs(); buildPins(); colorModel(); showConditions(); };
+}
+function showElement(id){
+  const e = EL.get(id), recs = recsBy.get(id) || [];
+  panel.innerHTML = tabs() + `<button class="back" data-tab="building">‹ Building</button><div><h2>${esc(e.name)}</h2><p class="m note" style="font-family:var(--mono)">${esc(id)} · ${esc(e.kind)}${e.face ? " · faces " + esc(e.face) : ""}</p></div>
+    <table class="kv"><tr><td>Geometry source</td><td>${esc(e.src)}</td></tr>${e.host ? `<tr><td>On wall</td><td><a href="#" data-el="${esc(e.host)}">${esc(e.host)}</a></td></tr>` : ""}
+    <tr><td>Height range</td><td>${e.bbox[0][1].toFixed(1)} – ${e.bbox[1][1].toFixed(1)} m vs datum ${FR.grade.toFixed(2)} m NAVD88${e.frame ? `<div class="note">ground at this wall: ${e.frame.base >= 0 ? "+" : ""}${e.frame.base.toFixed(2)} m</div>` : ""}</td></tr>${e.note ? `<tr><td>Note</td><td>${esc(e.note)}</td></tr>` : ""}</table>
+    <div><h3>Condition records (${recs.length})</h3><div style="display:grid;gap:8px">${recs.map(recHTML).join("") || '<p class="note">None yet. Use ✚ Add condition to pin one.</p>'}</div></div>`;
+}
+function pinForm(id, point){
+  const e = EL.get(id), uv = wallUV(e, point), V = S.vocabulary; const cats = Object.keys(V).filter(k => k !== "_doc");
+  panel.innerHTML = tabs() + `<div><h2>New condition pin</h2><p class="sub">On <b>${esc(e.name)}</b> (${esc(id)})${uv ? `, u ${uv[0]} m along the wall, v ${uv[1]} m above the ground at this wall` : `, ${point.y.toFixed(1)} m above datum`}</p></div>
+    <form class="form" id="pf"><label>Category<select id="fCat">${cats.map(c => `<option>${esc(c)}</option>`).join("")}</select></label>
+      <label>Type<select id="fType"></select></label>
+      <label>Severity<select id="fSev"><option>critical</option><option>high</option><option selected>medium</option><option>low</option><option>unknown</option></select></label>
+      <label>Observation<textarea id="fTxt" rows="3" placeholder="What you see, extent, crack width, moisture reading…"></textarea></label>
+      <label>Observer<input id="fObs" autocomplete="name"></label><label>Date<input id="fDate" type="date" value="${new Date().toISOString().slice(0, 10)}"></label>
+      <label>Photo reference<input id="fPh" placeholder="e.g. IMG_4210, camera 2"></label>
+      <div class="btnrow"><button class="btn" type="submit">Save pin</button><button class="btn ghost" type="button" id="fCancel">Cancel</button></div></form>`;
+  const fill = () => { $("fType").innerHTML = V[$("fCat").value].map(t => `<option>${esc(t)}</option>`).join(""); }; fill(); $("fCat").onchange = fill;
+  try { $("fObs").value = localStorage.getItem("stjohn-twin-observer") || ""; } catch(err){}
+  $("fCancel").onclick = () => showElement(id);
+  $("pf").onsubmit = ev => { ev.preventDefault();
+    const r = {id:"P-" + Date.now().toString(36), elements:[id], category:$("fCat").value, type:$("fType").value, severity:$("fSev").value, status:"site", precision:"point",
+      sources:["site visit"], text:$("fTxt").value.trim(), observer:$("fObs").value.trim(), date:$("fDate").value, photo:$("fPh").value.trim(), uv, world:[+point.x.toFixed(3), +point.y.toFixed(3), +point.z.toFixed(3)]};
+    try { localStorage.setItem("stjohn-twin-observer", r.observer); } catch(err){}
+    PINS.push(r); savePins(); indexRecs(); buildPins(); colorModel(); showRecord(r); };
+}
+let oblDir = "east", oblIdx = -1, vertIdx = -1;
+async function showImagery(){
+  tab = "imagery";
+  const O = S.imagery.obliques, dirs = ["north", "east", "south", "west"], list = O.filter(o => o.look === oblDir);
+  if (oblIdx < 0 || oblIdx >= list.length) oblIdx = list.length - 1;
+  const o = list[oblIdx], Vt = S.imagery.verticals; if (vertIdx < 0) vertIdx = Vt.length - 1;
+  panel.innerHTML = tabs() + `<div><h2>Oblique timeline</h2><p class="sub">${esc(S.meta.oblique_note || "Nearmap obliques every year 2018–2026 (licensed).")}</p></div>
+    <div class="obl"><div class="ctl"><label class="sel" style="color:var(--ink-2)">Looking <select id="oDir">${dirs.map(d => `<option ${d === oblDir ? "selected" : ""}>${d}</option>`).join("")}</select></label>
+      <input id="oYear" type="range" min="0" max="${list.length - 1}" value="${oblIdx}" aria-label="Survey date"><b style="font-family:var(--mono)">${esc(o.date)}</b></div>
+      <img id="oImg" alt="${esc(o.label + ", " + o.date)}"><p class="note">${esc(o.label)}. Each survey frames the building a little differently. Compare by eye; nothing here is measured.</p></div>
+    <div class="obl"><h3>Vertical series (${Vt.length} surveys, 2015–2026)</h3><div class="ctl"><input id="vYear" type="range" min="0" max="${Vt.length - 1}" value="${vertIdx}" aria-label="Vertical survey date"><b style="font-family:var(--mono)">${esc(Vt[vertIdx].date)}</b></div>
+      <img id="vImg" alt="Nearmap vertical ${esc(Vt[vertIdx].date)}"><p class="note">Centre crop, 60 m across. Drag to watch roof condition over time.</p></div>`;
+  $("oImg").src = await imgURL(o.file);
+  $("oDir").onchange = e => { oblDir = e.target.value; oblIdx = -1; showImagery(); };
+  $("oYear").oninput = e => { oblIdx = +e.target.value; showImagery(); };
+  $("vYear").oninput = e => { vertIdx = +e.target.value; showImagery(); };
+  const vi = new Image(); vi.onload = () => {       // 60 m crop centred on the building (verticals cover ±150 m around the frame origin)
+    const c = document.createElement("canvas"), k = vi.width / 300, s = 30 * k, px = (FR.cx + 150) * k, py = (150 - FR.cy) * k; c.width = c.height = 700;
+    c.getContext("2d").drawImage(vi, px - s, py - s, 2 * s, 2 * s, 0, 0, 700, 700); $("vImg").src = c.toDataURL("image/jpeg", 0.85); };
+  vi.src = await imgURL(Vt[vertIdx].file);
+}
+function showHistory(){
+  tab = "history";
+  const H = S.history;
+  if (!H){ panel.innerHTML = tabs() + `<p class="note">History research not yet merged.</p>`; return; }
+  const C = H.claims || {};
+  panel.innerHTML = tabs() + `<div><h2>History and dating</h2><p class="sub">Claims being tested, with sources. Research snapshot ${esc(H.generated || "")}.</p></div>
+    <div><h3>Claims</h3><div style="display:grid;gap:8px">${Object.values(C).map(c => `<div class="crec" style="cursor:default"><span class="h">${pill(c.verdict === "verified" || c.verdict === "confirmed" ? "st-verified" : c.verdict === "contradicted" ? "st-conflicting" : "st-reported", c.verdict)} ${esc(c.claim)}</span><span class="t">${esc(c.detail)}</span>${(c.sources || []).length ? `<span class="m">${c.sources.map(u => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:\/\//, "").slice(0, 60))}</a>`).join(" · ")}</span>` : ""}</div>`).join("")}</div></div>
+    <div><h3>Facts</h3><ul class="plain sub">${(H.facts || []).map(f => `<li>${esc(f.fact)} <span class="tag ${f.status === "confirmed" ? "" : "warn"}">${esc(f.status)}</span>${f.source_url ? ` <a href="${esc(f.source_url)}" target="_blank" rel="noopener">source</a>` : ""}</li>`).join("")}</ul></div>
+    ${(H.aerials || []).length ? `<div><h3>Historic aerials at the site</h3><table class="kv">${H.aerials.map(a => `<tr><td>${esc(a.year)}</td><td>${esc(String(a.building_present))}<div class="note">${esc(a.source)} ${esc(a.frame_id || "")}. ${esc(a.notes || "")}</div></td></tr>`).join("")}</table></div>` : ""}
+    ${(S.aerialCrops || []).length ? `<div class="thumbs">${S.aerialCrops.map(a => `<figure><img data-src="${esc(a.file)}" alt="${esc(a.caption)}"><figcaption>${esc(a.caption)}</figcaption></figure>`).join("")}</div>` : ""}`;
+  panel.querySelectorAll("img[data-src]").forEach(async i => { i.src = await imgURL(i.dataset.src); });
+}
+function showSources(){
+  tab = "sources";
+  panel.innerHTML = tabs() + `<div><h2>Sources</h2></div><ul class="plain sub">${S.meta.sources.map(x => `<li>${x}</li>`).join("")}</ul>
+    <p class="note">${esc(S.sources_doc)}</p>`;
+}
+
+// ---------------------------------------------------------------- legend, layers, views
+function legend(){
+  const L = $("legend"), M = COLORS[cMode], hex = c => "#" + c.toString(16).padStart(6, "0");
+  const KINDS = new Set([...EL.values()].map(e => e.kind));
+  const names0 = cMode === "material" ? {wall:"masonry wall", parapet:"parapet", roof:"pitched roof", flatroof:"flat roof", chimney:"chimney", window:"window", door:"door", floor:"floor plate (assumed)", interior:"interior wall (Sanborn)", foundation:"foundation / retaining", porch:"porch deck", context:"context massing"} :
+    cMode === "severity" ? {critical:"critical", high:"high", medium:"medium", low:"low", unknown:"unknown", none:"no record"} :
+    cMode === "status" ? {conflicting:"sources conflict", reported:"reported (document)", "observed-lidar":"measured from lidar", "observed-imagery":"seen in imagery", withheld:"withheld (consent pending)", site:"field pin", verified:"verified", none:"no record"} :
+    {lidar:"lidar fit", sanborn:"Sanborn 1903/09 map", "lidar+oblique":"lidar + oblique", "lidar+assumed":"lidar + assumed", oblique:"traced from oblique", "oblique+assumed":"oblique + assumed", assumed:"assumed"};
+  const names = cMode === "material" ? Object.fromEntries(Object.entries(names0).filter(([k]) => KINDS.has(k))) : names0;
+  L.innerHTML = `<b>${{material:"Material", severity:"Worst severity", status:"Condition status", source:"Geometry source"}[cMode]}</b>` + Object.entries(names).map(([k, n]) => `<span><i style="background:${hex(M[k])}"></i>${esc(n)}</span>`).join("");
+}
+$("cMode").onchange = e => { cMode = e.target.value; colorModel(); };
+$("iMode").onchange = e => setImagery(e.target.value);
+document.querySelectorAll(".tog[data-layer]").forEach(b => b.addEventListener("click", () => {
+  const on = b.getAttribute("aria-pressed") !== "true"; b.setAttribute("aria-pressed", on); layers[b.dataset.layer].visible = on;
+}));
+$("pSize").oninput = e => [layers.points, layers.points06].forEach(g => g.children.forEach(p => p.material.size = +e.target.value));
+$("btnLayers").onclick = () => { const d = $("drawer"), o = d.hidden; d.hidden = !o; $("btnLayers").setAttribute("aria-expanded", o); };
+$("btnLegend").onclick = () => { const d = $("legend"), o = d.hidden; d.hidden = !o; $("btnLegend").setAttribute("aria-expanded", o); };
+$("btnPanel").onclick = () => { const l = document.querySelector(".layout"), o = l.classList.toggle("nopanel"); $("btnPanel").textContent = o ? "⟨ Show details" : "Hide details ⟩"; $("btnPanel").setAttribute("aria-expanded", !o); resize(); };
+$("imgnote").onclick = () => { const b = $("imgnote"); b.setAttribute("aria-expanded", b.getAttribute("aria-expanded") !== "true"); };
+$("btnPin").onclick = () => { pinMode = !pinMode; $("btnPin").classList.toggle("on", pinMode); $("btnPin").setAttribute("aria-pressed", pinMode); $("btnPin").textContent = pinMode ? "✚ Click the model…" : "✚ Add condition"; canvas.style.cursor = pinMode ? "crosshair" : ""; };
+let TGT;
+function fly(pos, tgt){ camera.position.copy(pos); controls.target.copy(tgt); controls.update(); }
+function home(){ const h = S.meta.home || [-38, 30, 44]; fly(TGT.clone().add(new THREE.Vector3(h[0], h[1], h[2])), TGT); }
+$("vHome").onclick = home;
+$("vTop").onclick = () => fly(TGT.clone().add(new THREE.Vector3(0, 90, 0.01)), TGT);
+document.querySelectorAll("[data-face]").forEach(b => b.onclick = () => {
+  // outward normal of each facade in world space: a axis = (cos t, sin t), b = (−sin t, cos t) in local x,y
+  const t = FR.theta_deg * Math.PI / 180, A = new THREE.Vector3(Math.cos(t), 0, -Math.sin(t)), B = new THREE.Vector3(-Math.sin(t), 0, -Math.cos(t));
+  const n = {N:A, S:A.clone().negate(), W:B, E:B.clone().negate()}[b.dataset.face];
+  fly(TGT.clone().add(n.clone().multiplyScalar(48)).add(new THREE.Vector3(0, 4, 0)), TGT.clone().setY(5));
+});
+
+// ---------------------------------------------------------------- boot
+async function boot(){
+  try {
+    statusEl.textContent = "Loading model…";
+    S = await getJSON("site.json"); FR = S.frame; GRADE = FR.grade;
+    S.elements.forEach(e => EL.set(e.id, e));
+    for (const [k, v] of Object.entries(S.meta.colors || {})) COLORS.material[k] = parseInt(v.replace("#", ""), 16);
+    if (S.elements.some(e => e.kind === "context")) $("ctxTog").hidden = false;
+    dem = new Float32Array(await getBuf("terrain.f32"));
+    TGT = new THREE.Vector3(FR.cx, 6, -FR.cy);
+    const sel = $("iMode"); sel.innerHTML = Object.entries(S.imagery).filter(([k, v]) => v.file).map(([k, v]) => `<option value="${k}">${esc(v.label.split(" (")[0])}</option>`).join("");
+    loadPins(); indexRecs();
+    await buildTerrain(); await buildModel(); buildPins();
+    await buildPoints("points.bin", layers.points, 1); await buildPoints("points06.bin", layers.points06, 1);
+    statusEl.hidden = true; resize(); home(); showBuilding(); legend();
+    if (!KEY) window.__twin = {select, S: () => S, meshes};
+    $("meta").textContent = `${S.elements.filter(e => e.bbox).length} elements · ${S.conditions.length} condition records · built ${S.generated}`;
+    $("about").innerHTML = S.meta.about;
+  } catch(e){ report("the model", e); return; }
+  (function loop(){ requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); placeLabels(); })();
+}
+
+// ---------------------------------------------------------------- gate (published copy only; dev copy has no gate.json)
+(async function(){
+  const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+  let G = null;
+  try { const r = await fetch("gate.json"); if (r.ok) G = await r.json(); } catch(e){}
+  if (!G) return boot();
+  const gate = document.createElement("div"); gate.id = "gate";
+  gate.innerHTML = `<form id="gateform"><p class="eyebrow">Penn State Heritage 3D Lab</p><h1 style="font-size:22px">St. John Parish House Twin</h1>
+    <label for="pw" class="sub">Enter the password to view.</label><input id="pw" type="password" autocomplete="current-password" required>
+    <label class="sub" style="display:flex;gap:8px;align-items:center"><input id="remember" type="checkbox" checked> Remember on this device for 30 days</label>
+    <button type="submit">View</button><p id="gatemsg" class="sub" role="alert" style="margin:0;min-height:1.2em"></p></form>`;
+  document.body.appendChild(gate);
+  const tryKey = async k => { const u = b64(G.check); try { await crypto.subtle.decrypt({name:"AES-GCM", iv:u.slice(0,12)}, k, u.slice(12)); return true; } catch(e){ return false; } };
+  const open = k => { KEY = k; gate.remove(); boot(); };
+  const idb = () => new Promise((res, rej) => { const r = indexedDB.open("stjohn-twin", 1); r.onupgradeneeded = () => r.result.createObjectStore("k"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+  const idbGet = async () => { const db = await idb(); return new Promise(res => { const q = db.transaction("k").objectStore("k").get("key"); q.onsuccess = () => res(q.result); q.onerror = () => res(null); }); };
+  const idbPut = async v => { const db = await idb(); return new Promise(res => { const t = db.transaction("k", "readwrite"); t.objectStore("k").put(v, "key"); t.oncomplete = res; t.onerror = res; }); };
+  const idbDel = async () => { try { const db = await idb(); db.transaction("k", "readwrite").objectStore("k").delete("key"); } catch(e){} };
+  try { const s = await idbGet();
+    if (s && s.exp > Date.now() && s.salt === G.salt && await tryKey(s.key)) return open(s.key);
+    if (s) await idbDel(); } catch(e){}
+  $("gateform").addEventListener("submit", async e => {
+    e.preventDefault(); const msg = $("gatemsg"); msg.textContent = "Checking…";
+    const base = await crypto.subtle.importKey("raw", new TextEncoder().encode($("pw").value.trim().toLowerCase()), "PBKDF2", false, ["deriveKey"]);
+    const k = await crypto.subtle.deriveKey({name:"PBKDF2", salt:b64(G.salt), iterations:G.iter, hash:"SHA-256"}, base, {name:"AES-GCM", length:256}, false, ["decrypt"]);
+    if (!(await tryKey(k))){ msg.textContent = "That password didn't work."; return; }
+    if ($("remember").checked){ try { await idbPut({key:k, salt:G.salt, exp:Date.now() + 30*864e5}); } catch(e){} }
+    open(k);
+  });
+})();
+</script>
+</body>
+</html>
