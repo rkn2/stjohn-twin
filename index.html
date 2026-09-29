@@ -288,11 +288,14 @@ async function buildTerrain(){
   g.computeVertexNormals();
   const mat = new THREE.MeshLambertMaterial({color:0xffffff});
   layers.terrain.add(new THREE.Mesh(g, mat));
-  await setImagery(S.imagery.nearmap ? "nearmap" : "naip");
+  await setImagery(S.imagery.leafoff ? "leafoff" : S.imagery.nearmap ? "nearmap" : "naip");
 }
 async function setImagery(k){
   const im = S.imagery[k]; if (!im) return;
   const tex = await new THREE.TextureLoader().loadAsync(await imgURL(im.file)); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
+  // an image may cover less than the terrain (+-HALF): scale the UVs so it lands in place; outside it the texture edge repeats (clamped)
+  const f = HALF / (im.half || HALF); tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+  tex.repeat.set(f, f); tex.offset.set((1 - f) / 2, (1 - f) / 2);
   const m = layers.terrain.children[0].material; m.map = tex; m.needsUpdate = true;
   $("imgnote").textContent = "Imagery: " + im.label;
 }
@@ -323,7 +326,7 @@ async function buildModel(){
     const id = o.name || o.parent?.name, e = EL.get(id); if (!e) continue;
     o.geometry.deleteAttribute("color");
     o.material = new THREE.MeshStandardMaterial({color:0xffffff, roughness:0.85, metalness:0, flatShading:true, transparent:e.kind === "floor" || e.kind === "ground" || e.kind === "interior" || e.kind === "tree",
-      opacity:e.kind === "floor" ? 0.55 : e.kind === "interior" ? 0.7 : e.kind === "tree" ? 0.45 : e.kind === "ground" ? 0 : 1, depthWrite:e.kind !== "tree", side:THREE.DoubleSide, polygonOffset:e.kind === "window" || e.kind === "door", polygonOffsetFactor:-2});
+      opacity:e.kind === "floor" ? 0.55 : e.kind === "interior" ? 0.7 : e.kind === "tree" ? 0.22 : e.kind === "ground" ? 0 : 1, depthWrite:e.kind !== "tree", side:THREE.DoubleSide, polygonOffset:e.kind === "window" || e.kind === "door", polygonOffsetFactor:-2});
     o.updateWorldMatrix(true, false);
     const g = o.geometry.clone().applyMatrix4(o.matrixWorld).toNonIndexed(); g.computeVertexNormals();
     const w = new THREE.Mesh(g, o.material); w.userData.id = id;
@@ -371,11 +374,13 @@ function toBuilding(v){   // world -> building frame (a, b, h)
 }
 function wallUV(e, v){
   if (!e.frame) return null;
-  if (e.frame.kind === "path" && S.trace){      // walkway: u = metres along the walk from its start, v = metres across (+ = right, walking clockwise)
-    const px = v.x, py = -v.z, T = S.trace; let bi = 0, bd = 1e9;
-    for (let i = 0; i < T.x.length; i++){ const d = (T.x[i] - px) ** 2 + (T.y[i] - py) ** 2; if (d < bd){ bd = d; bi = i; } }
-    const j = (bi + 1) % T.x.length, tx = T.x[j] - T.x[bi], ty = T.y[j] - T.y[bi], tl = Math.hypot(tx, ty) || 1;
-    return [+(bi * T.step).toFixed(2), +(((px - T.x[bi]) * ty - (py - T.y[bi]) * tx) / tl).toFixed(2)];
+  if (e.frame.kind === "path" && e.frame.p0){   // straight walk segment: u = metres along the walk from its start, v = metres across (+ = left)
+    const px = v.x - e.frame.p0[0], py = -v.z - e.frame.p0[1], d = e.frame.dir;
+    return [+(e.frame.s0 + px * d[0] + py * d[1]).toFixed(2), +(-px * d[1] + py * d[0]).toFixed(2)];
+  }
+  if (e.frame.kind === "ring"){                  // ring: u = metres around the centreline from north, clockwise; v = metres outward from the centreline
+    const dx = v.x - e.frame.cx, dy = -v.z - e.frame.cy, ang = (Math.atan2(dx, dy) * 180 / Math.PI + 360) % 360;
+    return [+(ang * Math.PI / 180 * e.frame.rc).toFixed(2), +(Math.hypot(dx, dy) - e.frame.rc).toFixed(2)];
   }
   const [a, b, h] = toBuilding(v), o = e.frame.origin, d = e.frame.dir;
   return [+(((a - o[0]) * d[0] + (b - o[1]) * d[1])).toFixed(2), +(h - (e.frame.base || 0)).toFixed(2)];
@@ -459,7 +464,7 @@ function showRecord(r){
   for (const id of r.elements){ const m = meshes.get(id); if (m) m.material.emissive.setHex(0x554400); }
   panel.innerHTML = tabs() + `<button class="back" data-tab="conditions">‹ All conditions</button>${recHTML(r)}
     <div><h3>Elements</h3><ul class="plain">${r.elements.map(id => `<li><a href="#" data-el="${esc(id)}">${esc(id)}</a>: ${esc(EL.get(id)?.name || "")}</li>`).join("")}</ul></div>
-    ${r.precision === "point" ? `<table class="kv"><tr><td>Position</td><td>${r.uv ? (EL.get(r.elements[0])?.frame?.kind === "path" ? `${r.uv[0]} m along the walk, ${r.uv[1]} m across` : `u ${r.uv[0]} m along, v ${r.uv[1]} m above local ground`) : "—"}</td></tr><tr><td>Observer</td><td>${esc(r.observer)}</td></tr><tr><td>Date</td><td>${esc(r.date)}</td></tr><tr><td>Photo ref</td><td>${esc(r.photo)}</td></tr></table>
+    ${r.precision === "point" ? `<table class="kv"><tr><td>Position</td><td>${r.uv ? (EL.get(r.elements[0])?.frame?.kind === "path" ? `${r.uv[0]} m along the walk, ${r.uv[1]} m across` : EL.get(r.elements[0])?.frame?.kind === "ring" ? `${r.uv[0]} m around from north, ${r.uv[1]} m out` : `u ${r.uv[0]} m along, v ${r.uv[1]} m above local ground`) : "—"}</td></tr><tr><td>Observer</td><td>${esc(r.observer)}</td></tr><tr><td>Date</td><td>${esc(r.date)}</td></tr><tr><td>Photo ref</td><td>${esc(r.photo)}</td></tr></table>
       <div class="btnrow"><button class="btn ghost" id="pDel">Delete this pin</button></div>` : `<p class="note">Element-level record: the source gives no position on the element.</p>`}`;
   if ($("pDel")) $("pDel").onclick = () => { PINS = PINS.filter(p => p.id !== r.id); savePins(); indexRecs(); buildPins(); colorModel(); showConditions(); };
 }
@@ -472,7 +477,7 @@ function showElement(id){
 }
 function pinForm(id, point){
   const e = EL.get(id), uv = wallUV(e, point), V = S.vocabulary; const cats = Object.keys(V).filter(k => k !== "_doc");
-  panel.innerHTML = tabs() + `<div><h2>New condition pin</h2><p class="sub">On <b>${esc(e.name)}</b> (${esc(id)})${uv ? (e.frame.kind === "path" ? `, ${uv[0]} m along the walk, ${uv[1]} m across` : `, u ${uv[0]} m along the wall, v ${uv[1]} m above the ground at this wall`) : `, ${point.y.toFixed(1)} m above datum`}</p></div>
+  panel.innerHTML = tabs() + `<div><h2>New condition pin</h2><p class="sub">On <b>${esc(e.name)}</b> (${esc(id)})${uv ? (e.frame.kind === "path" ? `, ${uv[0]} m along the walk, ${uv[1]} m across` : e.frame.kind === "ring" ? `, ${uv[0]} m around from north (clockwise), ${uv[1]} m out from the centreline` : `, u ${uv[0]} m along the wall, v ${uv[1]} m above the ground at this wall`) : `, ${point.y.toFixed(1)} m above datum`}</p></div>
     <form class="form" id="pf"><label>Category<select id="fCat">${cats.map(c => `<option>${esc(c)}</option>`).join("")}</select></label>
       <label>Type<select id="fType"></select></label>
       <label>Severity<select id="fSev"><option>critical</option><option>high</option><option selected>medium</option><option>low</option><option>unknown</option></select></label>
